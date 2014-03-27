@@ -9,28 +9,28 @@ import android.view.WindowManager;
 
 public abstract class SingleFragmentActivity extends FragmentActivity {
 
-	protected abstract Fragment createFragment();
-	
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		
-		/* Remove action bar */
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, 
-		                                WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		
-		setContentView(R.layout.activity_commercial);
-		
-		FragmentManager fm = getSupportFragmentManager();
-		Fragment fragment = fm.findFragmentById(R.id.fragmentContainer);
-		
-		if (fragment == null) {
-			fragment = createFragment();
-			fm.beginTransaction()
-				.add(R.id.fragmentContainer, fragment)
-				.commit();
-		}
-	}
-	
+    protected abstract Fragment createFragment();
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        
+        /* Remove action bar */
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, 
+                                        WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        
+        setContentView(R.layout.activity_commercial);
+        
+        FragmentManager fm = getSupportFragmentManager();
+        Fragment fragment = fm.findFragmentById(R.id.fragmentContainer);
+        
+        if (fragment == null) {
+            fragment = createFragment();
+            fm.beginTransaction()
+                .add(R.id.fragmentContainer, fragment)
+                .commit();
+        }
+    }
+    
 }
