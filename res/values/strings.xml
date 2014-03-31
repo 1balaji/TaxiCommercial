@@ -2,5 +2,9 @@
 <resources>
 
     <string name="app_name">Taxi Commercial</string>
+    <string name="downloader">Commercials downloading&#8230;</string>
+    <string name="network_not_found">Network connection not found</string>
+    
+    <color name="video_background">#000</color>
 
 </resources>

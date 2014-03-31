@@ -9,7 +9,7 @@ import android.support.v4.app.Fragment;
 
 public class MapActivity extends SingleFragmentActivity {
 
-    private final static int DELAY = 2000;
+    private final static int DELAY = 10000;
     
     @Override
     protected Fragment createFragment() {

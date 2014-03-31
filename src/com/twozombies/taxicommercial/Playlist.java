@@ -5,14 +5,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-
 import android.content.Context;
-import android.os.Environment;
 
 public class Playlist {
-    private final static String ROOT = "com.twozombies.taxicommercial";
-    private final static String PLAYLIST_FILENAME = "playlist.txt";
-    private final int SWITCHING_INTERVAL = 1;
+    public final static String PLAYLIST_FILENAME = "playlist.txt";
+    
+    private final int SWITCHING_INTERVAL = 3;
     
     private BufferedReader reader = null;
     private ArrayList<String> mVideos;
@@ -39,14 +37,19 @@ public class Playlist {
     
     /** Updates the playlist from a playlist file */
     public void update() {
-
+        mIterator = 0;
+        mVideos.clear();
+        
         try {
-            File root = new File(Environment.getExternalStorageDirectory(), ROOT);
-            File playlistFile = new File(root, PLAYLIST_FILENAME);
+            File playlistFile = new File(FileManager.getLocalFilePath(PLAYLIST_FILENAME));
+            
+            if (!playlistFile.exists())
+                playlistFile.createNewFile();
+            
             reader = new BufferedReader(new FileReader(playlistFile));
             String line = null;
             while ((line = reader.readLine()) != null) {
-                File videoFile = new File(root, line);
+                File videoFile = new File(FileManager.getLocalFilePath(line));
                 if (videoFile.isFile()) {
                     mVideos.add(videoFile.getAbsolutePath());
                 }
@@ -65,15 +68,31 @@ public class Playlist {
 
     }
     
+    /** Gets video list */
+    public ArrayList<String> getVideoList() {
+        return mVideos;
+    }
+    
     /** Gets first video from the playlist */
     public String getFirstVideo() {
-        return mVideos.get(0);
+        return getVideo(0);
     }
     
     /** Gets next video from the playlist */
     public String getNextVideo() {
-        String nextVideo = mVideos.get(mIterator % mVideos.size());
+        if (isEmpty()) {
+            return null;
+        }
+        
+        String nextVideo = getVideo(mIterator % mVideos.size());
         mIterator++;
+        
+        File nextVideoFile = new File(nextVideo);
+        if (!nextVideoFile.exists()) {
+            mVideos.remove(mIterator);
+            return getNextVideo();
+        }
+        
         mSwitching = ((mIterator % SWITCHING_INTERVAL) == 0)? true : false;
 
         return nextVideo;
@@ -82,5 +101,15 @@ public class Playlist {
     /** Checks switching state, true if a commercial block ended */
     public boolean isSwitching() {
         return mSwitching;
+    }
+    
+    /** True if playlist is empty */
+    public boolean isEmpty() {
+        return mVideos.isEmpty();
+    }
+    
+    /** Gets video by index */
+    private String getVideo(int index) {
+        return mVideos.get(index);
     }
 }

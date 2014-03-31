@@ -20,7 +20,7 @@ public abstract class SingleFragmentActivity extends FragmentActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, 
                                         WindowManager.LayoutParams.FLAG_FULLSCREEN);
         
-        setContentView(R.layout.activity_commercial);
+        setContentView(R.layout.activity_fragment);
         
         FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentById(R.id.fragmentContainer);

@@ -3,7 +3,6 @@ package com.twozombies.taxicommercial;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
-import android.util.Log;
 import android.widget.VideoView;
 
 public class VideoPlayer {
@@ -11,13 +10,16 @@ public class VideoPlayer {
     private VideoView mVideoView;
     private Playlist mPlaylist;
     
-    private static VideoPlayer mVideoPlayer;
     private Context mAppContext;
     
-    public VideoPlayer(Context appContext, VideoView videoView) {
-        mVideoView = videoView;
+    public VideoPlayer(Context appContext) {
         mPlaylist = Playlist.get(appContext);
         mAppContext = appContext;
+    }
+    
+    /** Connects to VideoView widget */
+    public void connectToView(VideoView videoView) {
+        mVideoView = videoView;
         
         mVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
@@ -41,27 +43,24 @@ public class VideoPlayer {
                 }          
             }
         });
-        
-    }
-    
-    /** Gets VideoPlayer instance if it is exists, or creates it otherwise */
-    public static VideoPlayer get(Context c, VideoView videoView) {
-        if (mVideoPlayer == null) {
-            mVideoPlayer = new VideoPlayer(c.getApplicationContext(), videoView);
-        }
-        return mVideoPlayer;
     }
     
     /** Starts playing video from the beginning */
     public void play() {
-        mVideoView.setVideoPath(mPlaylist.getFirstVideo());
-        mVideoView.requestFocus();
-        mVideoView.start();
+        if (mPlaylist.isEmpty()) {
+            return;
+        }
+        if (!mVideoView.isPlaying()) {
+            mVideoView.setVideoPath(mPlaylist.getNextVideo());
+            mVideoView.requestFocus();
+            mVideoView.start();
+        }
     }
     
     /** Stops playing */
     public void stop() {
-        mVideoView.stopPlayback();    
+        if (mVideoView.isPlaying())
+            mVideoView.stopPlayback();    
     }
     
 }
