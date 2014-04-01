@@ -1,5 +1,7 @@
 package com.twozombies.taxicommercial;
 
+import java.io.File;
+
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
@@ -7,13 +9,16 @@ import android.widget.VideoView;
 
 public class VideoPlayer {
 
+	private final static int COMMERCIAL_BLOCK_SIZE = 3;
+	private int mVideoCounter = 0;
+	
     private VideoView mVideoView;
     private Playlist mPlaylist;
     
     private Context mAppContext;
     
     public VideoPlayer(Context appContext) {
-        mPlaylist = Playlist.get(appContext);
+        mPlaylist = Playlist.get();
         mAppContext = appContext;
     }
     
@@ -31,9 +36,11 @@ public class VideoPlayer {
         mVideoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                if (!mPlaylist.isSwitching()) {
+            	mVideoCounter = (mVideoCounter + 1) % COMMERCIAL_BLOCK_SIZE;
+            	
+                if (mVideoCounter != 0) {
                     mp.reset();
-                    mVideoView.setVideoPath(mPlaylist.getNextVideo());
+                    mVideoView.setVideoPath(mPlaylist.getNextClip().getAbsolutePath());
                 }
                 else {
                     mp.reset();
@@ -51,9 +58,18 @@ public class VideoPlayer {
             return;
         }
         if (!mVideoView.isPlaying()) {
-            mVideoView.setVideoPath(mPlaylist.getNextVideo());
-            mVideoView.requestFocus();
-            mVideoView.start();
+        	File nextClip = null;
+        	while ((nextClip == null) && !mPlaylist.isEmpty()) {
+        		nextClip = mPlaylist.getNextClip();
+        		if (nextClip != null && !nextClip.exists())
+        			nextClip = null;
+        	}
+        	if (nextClip != null) {
+        		mVideoView.setVideoPath(nextClip.getAbsolutePath());
+                mVideoView.requestFocus();
+                mVideoView.start();
+        	}
+            
         }
     }
     

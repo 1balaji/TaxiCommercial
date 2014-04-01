@@ -1,5 +1,6 @@
 package com.twozombies.taxicommercial;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -29,7 +30,7 @@ public class CommercialFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        mPlaylist = Playlist.get(getActivity());
+        mPlaylist = Playlist.get();
         
     }
     
@@ -48,7 +49,7 @@ public class CommercialFragment extends Fragment {
     /** Updates playlist file and download all videos from the Dropbox if playlist not found */
     private void updatePlaylist() {
         Log.d(TAG, "updatePlaylist");
-        mPlaylist.update();
+        mPlaylist.validateAll();
         if (mPlaylist.isEmpty()) {
             ConnectivityManager cm =
                     (ConnectivityManager) getActivity()
@@ -58,13 +59,13 @@ public class CommercialFragment extends Fragment {
                !cm.getActiveNetworkInfo().isConnectedOrConnecting()) {
                 Toast.makeText(
                     getActivity(), 
-                    R.string.network_not_found, 
+                    R.string.network_not_found,
                     Toast.LENGTH_LONG
                 ).show();
                 
                 return;
             }
-            
+
             mProgressBar = new ProgressDialog(getActivity());
             mProgressBar.setCancelable(true);
             mProgressBar.setMessage(getActivity().getString(R.string.downloader));
@@ -72,29 +73,23 @@ public class CommercialFragment extends Fragment {
             mProgressBar.setProgress(0);
             mProgressBar.setMax(100);
             mProgressBar.show();
-            
+
             AsyncTask<Void, Integer, Void> task = new AsyncTask<Void, Integer, Void>() {
 
                 public Void doInBackground(Void... params) {
                     try {
                         
-                        byte[] content = FileManager.getExternalFileContent(Playlist.PLAYLIST_FILENAME);
-                        String externalPlaylist = new String(content);
-                        ArrayList<String> files = new ArrayList<String>();
-                        for (String fileName : externalPlaylist.split(System.getProperty("line.separator"))) {
-                            if (fileName != "") {
-                                files.add(fileName);
-                            }
-                        }
+                    	PlaylistDownloader downloader = new PlaylistDownloader();
+                    	
+                        File playlist = downloader.loadPlaylistFile();
+                        ArrayList<File> clips = Playlist.getClips(playlist);
                         
                         int filesDownloaded = 0;
-                        for (String fileName : files) {
-                            FileManager.downloadFile(fileName, fileName);
-                            filesDownloaded++;
-                            publishProgress((int) (100 * filesDownloaded / files.size()));
+                        for (File clip : clips) {
+                        	downloader.loadClipFile(clip.getName());
+                            filesDownloaded += 1;
+                            publishProgress((int) (100 * filesDownloaded / clips.size()));
                         }
-                        
-                        FileManager.saveToLocalFile(Playlist.PLAYLIST_FILENAME, content);
                         
                     } catch (IOException ex) {
                         ex.printStackTrace();
@@ -111,7 +106,11 @@ public class CommercialFragment extends Fragment {
                 @Override
                 protected void onPostExecute(Void result) {
                     mProgressBar.dismiss();
-                    mPlaylist.update();
+                    try {
+						mPlaylist.update();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
                     updateVideoView();
                     if (!mPlaylist.isEmpty())
                         mVideoPlayer.play();
@@ -125,6 +124,7 @@ public class CommercialFragment extends Fragment {
         }
     }
     
+    /** Updates videoView */
     private void updateVideoView() {
         mVideoView = (VideoView) mView.findViewById(R.id.commercial);
         
