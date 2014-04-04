@@ -19,6 +19,7 @@ public class Playlist {
     private ArrayList<File> mClips;
     private int nextClipIndex = 0;
     private Handler mHandler;
+    private boolean mWaitForUpdate = false;
     
     private static Playlist sPlaylist;
     
@@ -78,9 +79,15 @@ public class Playlist {
                             File playlist = downloader.loadPlaylistFile();
                             ArrayList<File> clips = Playlist.getClips(playlist);
                             
+                            ArrayList<File> clipsToRemove = new ArrayList<File>(mClips);
+                            clipsToRemove.removeAll(clips);
+                            
                             for (File clip : clips) {
-                                if (!clip.exists())
+                                if (!clip.exists()) {
+                                    Log.d(TAG, "download" + clip.toString());
                                     downloader.loadClipFile(clip.getName());
+                                    mClips.add(clip);
+                                }
                             }
                             
                         } catch (IOException ex) {
@@ -91,12 +98,8 @@ public class Playlist {
                     
                     @Override
                     protected void onPostExecute(Void result) {
-                        try {
-                            update();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        super.onPostExecute(result);    
+                        super.onPostExecute(result);
+                        mWaitForUpdate = true;
                     }
 
                 };
@@ -119,9 +122,23 @@ public class Playlist {
     /** Updates playlist and validates all clips */
     public void update() throws IOException {
         LocalStorage localStorage = new LocalStorage();
-        mClips.clear();
-        mClips = getClips(localStorage.getFileByName(PLAYLIST_FILENAME, true));
-        validateAll();
+        
+        ArrayList<File> newClips = getClips(localStorage.getFileByName(PLAYLIST_FILENAME, true));
+
+        if (!mClips.equals(newClips)) {
+            ArrayList<File> clipsToRemove = new ArrayList<File>(mClips);
+            clipsToRemove.removeAll(newClips);
+            
+            for (File clip : clipsToRemove) {
+                clip.delete();
+            }
+            
+            mClips.clear();
+            mClips = newClips;
+            nextClipIndex = 0;
+            
+            validateAll();
+        }
         
     }
 
@@ -193,4 +210,10 @@ public class Playlist {
         return mClips.isEmpty();
     }
     
+    /** Checks need to update playlist */
+    public boolean isWaitingForUpdate() {
+        boolean waitForUpdate = mWaitForUpdate;
+        mWaitForUpdate = false;
+        return waitForUpdate;
+    }
 }
